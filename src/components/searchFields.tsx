@@ -1,44 +1,82 @@
+import { useState } from "react";
 import TextField from "@mui/material/TextField";
 import Grid from "@mui/material/Grid2";
-import { Box, Button } from "@mui/material";
-import { useState } from "react";
+import { Box, Autocomplete, Chip } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
-import { russianLocale } from "@/helpers/russianLocale";
 import { postData } from "@/api/api";
+import {
+  autoCompleteName,
+  initialValues,
+  russianLocale,
+} from "@/helpers/index";
+import { FormValues, SearchFieldsProps } from "@/props/index";
+import { CustomButtons } from "./customButtons";
+import useCustomSnackbar from "@/hooks/useCustomSnackbar";
+import { CleanObject } from "@/helpers/cleanObject";
 
-const SearchFields = ({ setTableData, setLoading }) => {
-  const [formValues, setFormValues] = useState({});
+const SearchFields = ({ setTableData, setLoading }: SearchFieldsProps) => {
+  const [formValues, setFormValues] = useState<FormValues>(initialValues);
+  const { showSnackbar } = useCustomSnackbar();
+  const [errors, setErrors] = useState(false);
 
   const handleDelete = () => {
-    setFormValues({
-      orderNumber: "",
-      periodStart: "",
-      periodEnd: "",
-      contractor: "",
-      contractorPhone: "",
-      createdBy: "",
-      assingedTo: "",
-      clientAssignedTo: "",
-    });
+    setFormValues(initialValues);
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormValues((prevValues) => ({
-      ...prevValues,
-      [name]: value,
+  const handleChange = (key: keyof FormValues) => (_, newValue) => {
+    setFormValues((prev) => ({
+      ...prev,
+      [key]: newValue,
+    }));
+  };
+
+  const handleArrayChange = (key: keyof FormValues) => (_, newValue) => {
+    setFormValues((prev) => ({
+      ...prev,
+      [key]: (newValue || []).map((item) => item.label),
+    }));
+  };
+
+  const handleDateChange = (key: keyof FormValues) => (date) => {
+    setFormValues((prev) => ({
+      ...prev,
+      [key]: date,
     }));
   };
 
   const handleSearch = async () => {
     try {
       setLoading(true);
-      const response = await postData(formValues);
+
+      // Форматируем даты
+      const formattedValues = {
+        ...formValues,
+        co_moment_begin: formValues.co_moment_begin
+          ? formValues.co_moment_begin.format("YYYY-MM-DD HH:mm:ss")
+          : null,
+        co_moment_end: formValues.co_moment_end
+          ? formValues.co_moment_end.format("YYYY-MM-DD HH:mm:ss")
+          : null,
+      };
+      if (formattedValues.co_moment_end && !formattedValues.co_moment_begin) {
+        showSnackbar("Сначала выберите дату начала", {
+          variant: "error",
+        });
+        setErrors(true);
+        return;
+      }
+      // Очищаем объект от пустых значений
+      const cleanedValues = CleanObject(formattedValues);
+
+      // Отправляем только заполненные данные
+      const response = await postData(cleanedValues);
       setTableData(response);
-    } catch (error) {
-      console.error("Ошибка при получении данных:", error);
+    } catch {
+      showSnackbar("Ошибка при получении данных для таблицы", {
+        variant: "error",
+      });
     } finally {
       setLoading(false);
     }
@@ -48,127 +86,138 @@ const SearchFields = ({ setTableData, setLoading }) => {
     <Box
       sx={{
         mb: 2,
-        borderBottom: 4,
-        borderColor: "lightblue",
+        borderBottom: 3,
+        borderColor: "lightgrey",
       }}
     >
       <Grid
         container
         mb={2}
-        spacing={{ xs: 2, md: 2 }}
-        columns={{ xs: 4, sm: 8, md: 8 }}
+        spacing={{ xs: 2, md: 1 }}
+        columns={{ xs: 4, md: 8 }}
       >
-        {/*  Номер заказа и Период */}
+        {/* Номер заказа */}
         <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-          <TextField
-            label="Номер заказа"
-            name="orderNumber"
-            // value={formValues.orderNumber}
-            onChange={handleChange}
-            fullWidth
+          <Autocomplete
+            options={[]}
+            freeSolo
+            multiple
+            value={formValues.co_name}
+            onChange={handleChange("co_name")}
+            renderTags={(value, getTagProps) =>
+              value.map((option, index) => (
+                <Chip label={option} {...getTagProps({ index })} />
+              ))
+            }
+            renderInput={(params) => (
+              <TextField label="Номер заказа" type="number" {...params} />
+            )}
           />
         </Grid>
 
+        {/* Период */}
         <Grid
           size={{ xs: 12, sm: 6, md: 4 }}
-          sx={{ display: "flex", justifyContent: "space-between", gap: 2 }}
+          sx={{ display: "flex", justifyContent: "space-between", gap: 1 }}
         >
           <LocalizationProvider
             dateAdapter={AdapterDayjs}
-            adapterLocale="ru"
             localeText={russianLocale}
           >
-            <DatePicker sx={{ width: "30vw" }} label="Дата начала" />
-            <DatePicker sx={{ width: "30vw" }} label="Дата окончания" />
+            <DatePicker
+              sx={{ width: "50%" }}
+              label="Дата начала"
+              value={formValues.co_moment_begin}
+              onChange={handleDateChange("co_moment_begin")}
+              format="DD/MM/YYYY"
+              slotProps={{
+                textField: {
+                  error: errors,
+                },
+              }}
+            />
+            <DatePicker
+              sx={{ width: "50%" }}
+              label="Дата окончания"
+              value={formValues.co_moment_end}
+              onChange={handleDateChange("co_moment_end")}
+              format="DD/MM/YYYY"
+              minDate={formValues.co_moment_begin}
+            />
           </LocalizationProvider>
         </Grid>
 
-        {/* Контрагент и Телефон контрагента */}
+        {/* Контрагент */}
         <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-          <TextField
-            label="Контрагент"
-            name="contractor"
-            // value={formValues.contractor}
-            onChange={handleChange}
-            fullWidth
+          <Autocomplete
+            freeSolo
+            options={[]}
+            multiple
+            value={formValues.cp_name}
+            onChange={handleChange("cp_name")}
+            renderTags={(value, getTagProps) =>
+              value.map((option, index) => (
+                <Chip label={option} {...getTagProps({ index })} />
+              ))
+            }
+            renderInput={(params) => (
+              <TextField {...params} label="Контрагент" fullWidth />
+            )}
           />
         </Grid>
 
+        {/* Телефон контрагента */}
         <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-          <TextField
-            label="Телефон контрагента"
-            name="contractorPhone"
-            // value={formValues.contractorPhone}
-            onChange={handleChange}
-            fullWidth
+          <Autocomplete
+            freeSolo
+            options={[]}
+            multiple
+            value={formValues.cp_phone}
+            onChange={handleChange("cp_phone")}
+            renderTags={(value, getTagProps) =>
+              value.map((option, index) => (
+                <Chip label={option} {...getTagProps({ index })} />
+              ))
+            }
+            renderInput={(params) => (
+              <TextField {...params} label="Телефон контрагента" fullWidth />
+            )}
           />
         </Grid>
 
-        {/* Данные о заявке */}
-        <Grid size={{ xs: 12, sm: 6, md: 2.7 }}>
-          <TextField
-            label="Завел заявку"
-            name="createdBy"
-            // value={formValues.createdBy}
-            onChange={handleChange}
-            fullWidth
-          />
-        </Grid>
-
-        <Grid size={{ xs: 12, sm: 6, md: 2.7 }}>
-          <TextField
-            label="Заявка закреплена"
-            name="assingedTo"
-            // value={formValues.assingedTo}
-            onChange={handleChange}
-            fullWidth
-          />
-        </Grid>
-
-        <Grid size={{ xs: 12, sm: 6, md: 2.6 }}>
-          <TextField
-            label="Клиент закреплен"
-            name="clientAssignedTo"
-            // value={formValues.clientAssignedTo}
-            onChange={handleChange}
-            fullWidth
-          />
-        </Grid>
+        {/* Завел заявку, Заявка закреплена, Клиент закреплен */}
+        {["Завел заявку", "Заявка закреплена", "Клиент закреплен"].map(
+          (field, index) => (
+            <Grid
+              key={field}
+              size={{ xs: 12, sm: 6, md: index === 2 ? 2.6 : 2.7 }}
+            >
+              <Autocomplete
+                disablePortal
+                options={autoCompleteName}
+                multiple
+                noOptionsText="Сотрудник не найден"
+                value={autoCompleteName.filter((option) =>
+                  formValues[field as keyof FormValues]?.includes(
+                    option.label || ""
+                  )
+                )}
+                onChange={handleArrayChange(field as keyof FormValues)}
+                renderTags={(value, getTagProps) =>
+                  value.map((option, index) => (
+                    <Chip label={option.label} {...getTagProps({ index })} />
+                  ))
+                }
+                renderInput={(params) => (
+                  <TextField {...params} label={field} fullWidth />
+                )}
+              />
+            </Grid>
+          )
+        )}
       </Grid>
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "center",
-          mb: 2,
-          mt: 3,
-          width: "100%",
-        }}
-      >
-        <Box
-          sx={{
-            display: "flex",
-            gap: 2,
-            maxWidth: "600px",
-            width: "100%",
-          }}
-        >
-          <Button
-            variant="contained"
-            onClick={handleSearch}
-            sx={{ textTransform: "none", flex: 1 }}
-          >
-            Поиск
-          </Button>
 
-          <Button
-            variant="outlined"
-            onClick={handleDelete}
-            sx={{ textTransform: "none", flex: 1 }}
-          >
-            Сбросить
-          </Button>
-        </Box>
-      </Box>
+      <CustomButtons handleSearch={handleSearch} handleDelete={handleDelete} />
     </Box>
   );
 };

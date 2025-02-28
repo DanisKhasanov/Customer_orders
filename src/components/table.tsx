@@ -4,100 +4,72 @@ import {
   useMaterialReactTable,
   type MRT_ColumnDef,
 } from "material-react-table";
-
 import { MRT_Localization_RU } from "material-react-table/locales/ru";
 import { OrderItems } from "./orderItems";
-
-interface TableProps {
-  tableData: OrderData[];
-  loading: boolean;
-}
-
-interface OrderData {
-  orderNumber: string; // Номер заказа
-  date: string; // Дата
-  counterparty: string; // Контрагент
-  counterpartyPhone: string; // Тел. контрагента
-  paid: number; // Оплачено
-  salesChannel: string; // Канал продаж
-  isNewClient: string; // Новый клиент
-  createdRequest: string; // Завел заявку
-  requestAttached: string; // Заявка закреплена
-  clientAttached: string; // Клиент закреплен
-  deliveryMethodNew: string; // Способ доставки NEW
-  trackingNumber: string; // Трек-номер
-  items: {
-    name: string;
-    quantity: number;
-    unit: string;
-    price: number;
-    total: number;
-  }[]; // Товары
-}
-
+import { OrderData, TableProps } from "@/props/index";
+import dayjs from "dayjs";
+//TODO: Добавить общую сумму внизу и общее количество заказов 
 const Table = ({ tableData, loading }: TableProps) => {
   const columns = useMemo<MRT_ColumnDef<OrderData>[]>(
     () => [
       {
-        accessorKey: "orderNumber",
-        header: "Номер заказа",
-        size: 70,
-      },
-      {
-        accessorKey: "date",
-        header: "Дата",
+        accessorKey: "co_name",
+        header: "Номер",
         size: 50,
       },
       {
-        accessorKey: "counterparty",
+        accessorKey: "co_moment",
+        header: "Дата",
+        Cell: ({ cell }) => dayjs(cell.getValue()).format("DD.MM.YYYY HH:mm"),
+        size: 80,
+      },
+      {
+        accessorKey: "cp_name",
         header: "Контрагент",
         size: 150,
       },
       {
-        accessorKey: "counterpartyPhone",
-        header: "Тел. контрагента",
-        size: 80,
+        accessorKey: "cp_phone",
+        header: "Телефон",
+        size: 100,
       },
       {
-        accessorKey: "paid",
+        accessorKey: "payedSum",
         header: "Оплачено",
-        size: 60,
+        Cell: ({ cell }) => `${cell.getValue()} р.`,
+        size: 50,
       },
       {
-        accessorKey: "salesChannel",
+        accessorKey: "salesChannel_name",
         header: "Канал продаж",
-        size: 75,
+        size: 50,
       },
       {
-        accessorKey: "isNewClient",
-        header: "Новый клиент",
-        size: 80,
-      },
-      {
-        accessorKey: "createdRequest",
+        accessorKey: "co_attribures.Завел заявку",
         header: "Завел заявку",
-        size: 100,
+        size: 120,
       },
       {
-        accessorKey: "requestAttached",
+        accessorKey: "co_attribures.Заявка закреплена",
         header: "Заявка закреплена",
-        size: 100,
+        size: 120,
       },
       {
-        accessorKey: "clientAttached",
+        accessorKey: "co_attribures.Клиент закреплен",
         header: "Клиент закреплен",
-        size: 100,
+        size: 120,
       },
       {
-        accessorKey: "deliveryMethodNew",
+        accessorKey: "co_attribures.Способ доставки NEW",
         header: "Способ доставки NEW",
-        size: 70,
+        size: 50,
       },
       {
-        accessorKey: "trackingNumber",
+        accessorKey: "co_attribures.Трек-номер",
         header: "Трек-номер",
-        size: 60,
-      },
+        size: 50,
+      }
+      
     ],
     []
   );
@@ -106,17 +78,16 @@ const Table = ({ tableData, loading }: TableProps) => {
     columns,
     data: tableData,
     state: { isLoading: loading },
-    layoutMode: "grid",
     enableColumnActions: false,
     enableTopToolbar: false,
     localization: MRT_Localization_RU,
     paginationDisplayMode: "pages",
     muiTableHeadCellProps: {
       sx: {
-        fontSize: "12px",
+        fontSize: "13px",
+        backgroundColor: "#f4f4f4",
       },
     },
-
     muiPaginationProps: {
       color: "primary",
       showRowsPerPage: false,
@@ -130,11 +101,18 @@ const Table = ({ tableData, loading }: TableProps) => {
     },
     muiTableContainerProps: {
       sx: {
-        height: "53vh",
+        height: "54vh",
       },
     },
     renderDetailPanel: ({ row }) => {
-      const itemDetails = row.original.items;
+      const itemDetails = row.original.co_positions.map((item) => ({
+        code: item.code,
+        name: item.name,
+        quantity: item.quantity,
+        unit: "шт",
+        price: item.price,
+        total: (item.price * item.quantity).toFixed(2),
+      }));
       return <OrderItems itemDetails={itemDetails} />;
     },
   });
