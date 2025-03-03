@@ -9,6 +9,7 @@ import SearchFields from "@/components/searchFields";
 function App() {
   const [tableData, setTableData] = useState([]);
   const [loading, setLoading] = useState(false);
+
   return (
     <>
       <Provider store={store}>

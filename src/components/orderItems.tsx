@@ -16,15 +16,24 @@ export const OrderItems = ({ itemDetails }: OrderItemsProps) => {
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
+        border: "1px solid lightgray",
       }}
     >
-      <Table size="small" sx={{ width: "90vw" }}>
+      <Table size="small">
         <TableHead>
-          <TableRow sx={{ backgroundColor: "#f4f4f4" }}>
+          <TableRow
+            sx={{
+              backgroundColor: "#f4f4f4",
+              color: "black",
+              
+            }}
+          >
             <TableCell sx={{ ...style, fontWeight: "bold" }}>
               Наименование
             </TableCell>
-            <TableCell sx={{ ...style, fontWeight: "bold" }}>Колличество</TableCell>
+            <TableCell sx={{ ...style, fontWeight: "bold" }}>
+              Колличество
+            </TableCell>
             <TableCell sx={{ ...style, fontWeight: "bold" }}>Ед.изм.</TableCell>
             <TableCell sx={{ ...style, fontWeight: "bold" }}>Цена</TableCell>
             <TableCell sx={{ ...style, fontWeight: "bold" }}>Сумма</TableCell>

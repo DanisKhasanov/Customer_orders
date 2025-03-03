@@ -1,17 +1,21 @@
 import { useSnackbar, OptionsObject, SnackbarMessage } from "notistack";
+import { useCallback } from "react";
 
 const useCustomSnackbar = () => {
   const { enqueueSnackbar } = useSnackbar();
 
-  const showSnackbar = (message: SnackbarMessage, options?: OptionsObject) => {
-    enqueueSnackbar(message, {
-      anchorOrigin: {
-        vertical: 'bottom',
-        horizontal: 'left',
-      },
-      ...options,
-    });
-  };
+  const showSnackbar = useCallback(
+    (message: SnackbarMessage, options?: OptionsObject) => {
+      enqueueSnackbar(message, {
+        anchorOrigin: {
+          vertical: "bottom",
+          horizontal: "left",
+        },
+        ...options,
+      });
+    },
+    [enqueueSnackbar]
+  );
 
   return { showSnackbar };
 };

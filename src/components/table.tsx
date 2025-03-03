@@ -8,14 +8,20 @@ import { MRT_Localization_RU } from "material-react-table/locales/ru";
 import { OrderItems } from "./orderItems";
 import { OrderData, TableProps } from "@/props/index";
 import dayjs from "dayjs";
-//TODO: Добавить общую сумму внизу и общее количество заказов 
+
 const Table = ({ tableData, loading }: TableProps) => {
+  const totalOrders = tableData.length;
+  const totalPaid = useMemo(() => {
+    return tableData.reduce((sum, row) => sum + (row.payedSum || 0), 0);
+  }, [tableData]);
+
   const columns = useMemo<MRT_ColumnDef<OrderData>[]>(
     () => [
       {
         accessorKey: "co_name",
         header: "Номер",
         size: 50,
+        Footer: () => <>Всего: {totalOrders}</>,
       },
       {
         accessorKey: "co_moment",
@@ -36,8 +42,9 @@ const Table = ({ tableData, loading }: TableProps) => {
       {
         accessorKey: "payedSum",
         header: "Оплачено",
-        Cell: ({ cell }) => `${cell.getValue()} р.`,
+        Cell: ({ cell }) => `${(cell.getValue() / 100).toFixed(2)} р.`,
         size: 50,
+        Footer: () => <>{`${(totalPaid / 100).toFixed(2)} р.`}</>,
       },
       {
         accessorKey: "salesChannel_name",
@@ -68,24 +75,35 @@ const Table = ({ tableData, loading }: TableProps) => {
         accessorKey: "co_attribures.Трек-номер",
         header: "Трек-номер",
         size: 50,
-      }
-      
+      },
     ],
-    []
+    [totalOrders, totalPaid] // Зависимости для пересчета footer при изменении данных
   );
 
   const table = useMaterialReactTable({
     columns,
     data: tableData,
+    initialState: {
+      pagination: { pageSize: 20, pageIndex: 0 },
+      density: "compact",
+    },
     state: { isLoading: loading },
     enableColumnActions: false,
     enableTopToolbar: false,
+    // enableStickyHeader: true,
     localization: MRT_Localization_RU,
     paginationDisplayMode: "pages",
     muiTableHeadCellProps: {
       sx: {
-        fontSize: "13px",
+        fontSize: "14px",
         backgroundColor: "#f4f4f4",
+      },
+    },
+    muiTableFooterCellProps: {
+      sx: {
+        fontWeight: "bold", // Делаем текст жирным
+        fontSize: "14px",
+        color: "black",
       },
     },
     muiPaginationProps: {
@@ -99,21 +117,21 @@ const Table = ({ tableData, loading }: TableProps) => {
         borderBottom: "1px solid lightgray",
       },
     },
-    muiTableContainerProps: {
-      sx: {
-        height: "54vh",
-      },
-    },
+    // muiTableContainerProps: {
+    //   sx: {
+    //     height: "90vh",
+    //   },
+    // },
     renderDetailPanel: ({ row }) => {
       const itemDetails = row.original.co_positions.map((item) => ({
         code: item.code,
         name: item.name,
         quantity: item.quantity,
         unit: "шт",
-        price: item.price,
+        price: (item.price).toFixed(2),
         total: (item.price * item.quantity).toFixed(2),
       }));
-      return <OrderItems itemDetails={itemDetails} />;
+      return <OrderItems  itemDetails={itemDetails} />;
     },
   });
 

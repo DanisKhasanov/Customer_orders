@@ -11,7 +11,7 @@ const api = axios.create({
   withCredentials: true,
 });
 
-export const postData = async (formValues:string[]) => {
+export const postData = async (formValues) => {
   try {
     console.log(formValues);
     const response = await api.post("/orders/", formValues);
@@ -23,8 +23,6 @@ export const postData = async (formValues:string[]) => {
 };
 
 export const getAutoComplete = async (q: string, field: string) => {
-  if (q.length < 3) return [];
-
   try {
     const response = await api.get("/autocomplete/", {
       params: {
@@ -32,7 +30,7 @@ export const getAutoComplete = async (q: string, field: string) => {
         field,
       },
     });
-    return response.data;
+    return Array.isArray(response.data) ? response.data.slice(0, 10) : [];
   } catch (error) {
     console.error("Ошибка при отправке данных на сервер:", error);
     throw error;

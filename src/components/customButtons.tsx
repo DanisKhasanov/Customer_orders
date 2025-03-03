@@ -12,8 +12,8 @@ export const CustomButtons = ({
       sx={{
         display: "flex",
         justifyContent: "center",
-        mb: 2,
-        mt: 3,
+        mb: 1.5,
+        mt: 1.5,
         width: "100%",
       }}
     >
