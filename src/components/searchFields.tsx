@@ -35,7 +35,7 @@ const SearchFields = ({ setTableData, setLoading }: SearchFieldsProps) => {
   const handleArrayChange = (key: keyof FormValues) => (_, newValue) => {
     setFormValues((prev) => ({
       ...prev,
-      [key]: (newValue || []).map((item) => item.label),
+      [key]: (newValue || []).map((item) => item),
     }));
   };
 
@@ -199,13 +199,13 @@ const SearchFields = ({ setTableData, setLoading }: SearchFieldsProps) => {
                 noOptionsText="Сотрудник не найден"
                 value={autoCompleteName.filter((option) =>
                   formValues[field as keyof FormValues]?.includes(
-                    option.label || ""
+                    option || ""
                   )
                 )}
                 onChange={handleArrayChange(field as keyof FormValues)}
                 renderTags={(value, getTagProps) =>
                   value.map((option, index) => (
-                    <Chip label={option.label} {...getTagProps({ index })} />
+                    <Chip label={option} {...getTagProps({ index })} />
                   ))
                 }
                 renderInput={(params) => (
