@@ -100,24 +100,26 @@ const SearchFields = ({ setTableData, setLoading }: SearchFieldsProps) => {
     setFormValues(initialValues);
   };
 
-  const handleArrayChange = (key: keyof FormValues) => (_, newValue) => {
-    setFormValues((prev) => ({
-      ...prev,
-      [key]: newValue,
-    }));
-  };
+  const handleArrayChange =
+    (key: keyof FormValues) => (_: any, newValue: any) => {
+      setFormValues((prev) => ({
+        ...prev,
+        [key]: newValue,
+      }));
+    };
 
-  const handleCpChange = (_, newValue) => {
+  const handleCpChange = (_: any, newValue: any) => {
     setFormValues((prev) => {
       // Получаем новые имена и их соответствующие телефоны
-      const newNames = newValue.map((item) => item.name);
+      const newNames = newValue.map((item: any) => item.name);
       const newPhones = newNames.map(
-        (name) => cpOptions.find((opt) => opt.name === name)?.phone || ""
+        (name: string) =>
+          cpOptions.find((opt) => opt.name === name)?.phone || ""
       );
 
       // Объединяем старые телефоны с новыми (если они еще не добавлены)
       const updatedPhones = [...prev.cp_phone];
-      newNames.forEach((name, index) => {
+      newNames.forEach((name: string, index: number) => {
         const existingIndex = prev.cp_name.indexOf(name);
         if (existingIndex === -1) {
           updatedPhones.push(newPhones[index]);
@@ -131,17 +133,19 @@ const SearchFields = ({ setTableData, setLoading }: SearchFieldsProps) => {
       };
     });
   };
-  const handleCpPhoneChange = (_, newValue) => {
+
+  const handleCpPhoneChange = (_: any, newValue: any) => {
     setFormValues((prev) => {
       // Получаем новые имена и их соответствующие телефоны
-      const newPhones = newValue.map((item) => item.phone);
+      const newPhones = newValue.map((item: any) => item.phone);
       const newNames = newPhones.map(
-        (phone) => cpOptions.find((opt) => opt.phone === phone)?.name || ""
+        (phone: string) =>
+          cpOptions.find((opt) => opt.phone === phone)?.name || ""
       );
 
       // Объединяем старые телефоны с новыми (если они еще не добавлены)
       const updatedPhones = [...prev.cp_name];
-      newPhones.forEach((name, index) => {
+      newPhones.forEach((name: string, index: number) => {
         const existingIndex = prev.cp_phone.indexOf(name);
         if (existingIndex === -1) {
           updatedPhones.push(newNames[index]);
@@ -155,7 +159,8 @@ const SearchFields = ({ setTableData, setLoading }: SearchFieldsProps) => {
       };
     });
   };
-  const handleDateChange = (key: keyof FormValues) => (date) => {
+
+  const handleDateChange = (key: keyof FormValues) => (date: any) => {
     setFormValues((prev) => ({
       ...prev,
       [key]: date,
@@ -201,8 +206,7 @@ const SearchFields = ({ setTableData, setLoading }: SearchFieldsProps) => {
   return (
     <Box
       sx={{
-        mb: 3,
-        borderBottom: 3,
+        borderBottom: 2,
         borderColor: "lightgrey",
       }}
     >

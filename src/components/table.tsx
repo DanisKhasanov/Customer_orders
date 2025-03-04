@@ -26,7 +26,8 @@ const Table = ({ tableData, loading }: TableProps) => {
       {
         accessorKey: "co_moment",
         header: "Дата",
-        Cell: ({ cell }) => dayjs(cell.getValue()).format("DD.MM.YYYY HH:mm"),
+        Cell: ({ cell }) =>
+          dayjs(cell.getValue() as string).format("DD.MM.YYYY HH:mm"),
         size: 80,
       },
       {
@@ -42,7 +43,10 @@ const Table = ({ tableData, loading }: TableProps) => {
       {
         accessorKey: "payedSum",
         header: "Оплачено",
-        Cell: ({ cell }) => `${(cell.getValue() / 100).toFixed(2)} р.`,
+        Cell: ({ cell }) => {
+          const value = cell.getValue() as number;
+          return `${(value / 100).toFixed(2)} р.`;
+        },
         size: 50,
         Footer: () => <>{`${(totalPaid / 100).toFixed(2)} р.`}</>,
       },
@@ -84,13 +88,12 @@ const Table = ({ tableData, loading }: TableProps) => {
     columns,
     data: tableData,
     initialState: {
-      pagination: { pageSize: 20, pageIndex: 0 },
+      pagination: { pageSize: 19, pageIndex: 0 },
       density: "compact",
     },
     state: { isLoading: loading },
     enableColumnActions: false,
     enableTopToolbar: false,
-    // enableStickyHeader: true,
     localization: MRT_Localization_RU,
     paginationDisplayMode: "pages",
     muiTableHeadCellProps: {
@@ -101,7 +104,7 @@ const Table = ({ tableData, loading }: TableProps) => {
     },
     muiTableFooterCellProps: {
       sx: {
-        fontWeight: "bold", // Делаем текст жирным
+        fontWeight: "bold",
         fontSize: "14px",
         color: "black",
       },
@@ -117,21 +120,17 @@ const Table = ({ tableData, loading }: TableProps) => {
         borderBottom: "1px solid lightgray",
       },
     },
-    // muiTableContainerProps: {
-    //   sx: {
-    //     height: "90vh",
-    //   },
-    // },
+
     renderDetailPanel: ({ row }) => {
       const itemDetails = row.original.co_positions.map((item) => ({
         code: item.code,
         name: item.name,
         quantity: item.quantity,
-        unit: "шт",
-        price: (item.price).toFixed(2),
+        unit: item.uom,
+        price: item.price.toFixed(2),
         total: (item.price * item.quantity).toFixed(2),
       }));
-      return <OrderItems  itemDetails={itemDetails} />;
+      return <OrderItems itemDetails={itemDetails} />;
     },
   });
 

@@ -24,5 +24,6 @@ export interface OrderData {
     price: number;
     discount: number;
     quantity: number;
+    uom: string
   }[]; // Товары
 }

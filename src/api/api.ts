@@ -1,4 +1,3 @@
-import { Fields } from "@/components/fields";
 import axios from "axios";
 
 const URL_API = import.meta.env.VITE_DOMEN;
@@ -11,7 +10,7 @@ const api = axios.create({
   withCredentials: true,
 });
 
-export const postData = async (formValues) => {
+export const postData = async (formValues: any) => {
   try {
     console.log(formValues);
     const response = await api.post("/orders/", formValues);
