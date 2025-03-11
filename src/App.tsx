@@ -1,10 +1,10 @@
 import { useState } from "react";
 import "./App.css";
 import { SnackbarProvider } from "notistack";
-import { Provider } from "react-redux";
-import store from "@/store/store";
-import Table from "@/components/table";
-import SearchFields from "@/components/searchFields";
+// import { Provider } from "react-redux";
+// import store from "@/store/store";
+import Table from "@/components/table/table";
+import SearchFields from "@/components/fields/searchFields";
 import {
   Box,
   Collapse,
@@ -23,9 +23,9 @@ function App() {
   };
 
   return (
-    <Provider store={store}>
+    // <Provider store={store}>
       <SnackbarProvider maxSnack={5}>
-        <Collapse in={expanded}>
+        <Collapse timeout={400} in={expanded}>
           <Box>
             <SearchFields setTableData={setTableData} setLoading={setLoading} />
           </Box>
@@ -41,7 +41,7 @@ function App() {
         </Box>
         <Table tableData={tableData} loading={loading} />
       </SnackbarProvider>
-    </Provider>
+    // </Provider>
   );
 }
 

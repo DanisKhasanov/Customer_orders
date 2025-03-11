@@ -1,7 +1,13 @@
 import { useEffect, useState } from "react";
 import TextField from "@mui/material/TextField";
 import Grid from "@mui/material/Grid2";
-import { Box, Autocomplete, Chip, CircularProgress } from "@mui/material";
+import {
+  Box,
+  Autocomplete,
+  Chip,
+  CircularProgress,
+  Collapse,
+} from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
@@ -10,12 +16,14 @@ import {
   autoCompleteName,
   initialValues,
   russianLocale,
+  CleanObject,
+  getToday,
 } from "@/helpers/index";
 import { FormValues, SearchFieldsProps } from "@/props/index";
-import { CustomButtons } from "./customButtons";
+import { CustomButtons } from "../button/customButtons";
 import useCustomSnackbar from "@/hooks/useCustomSnackbar";
-import { CleanObject } from "@/helpers/cleanObject";
-import { getToday } from "@/helpers/getToday";
+import { AddedSearchFields } from "./addedSearchFields";
+import { CustomAutocomplete } from "../autocomplete/customAutocomplete";
 
 const SearchFields = ({ setTableData, setLoading }: SearchFieldsProps) => {
   const [formValues, setFormValues] = useState<FormValues>(initialValues);
@@ -26,6 +34,7 @@ const SearchFields = ({ setTableData, setLoading }: SearchFieldsProps) => {
   );
   const [cpLoading, setCpLoading] = useState(false);
   const [noOptionsMessage, setNoOptionsMessage] = useState<string>("");
+  const [addFields, setAddFields] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -52,7 +61,7 @@ const SearchFields = ({ setTableData, setLoading }: SearchFieldsProps) => {
     fetchData();
   }, []);
 
-  const fetchAutoComplete = async (query: string) => {
+  const fetchNameAutoComplete = async (query: string) => {
     if (query.length < 3) return;
     setCpLoading(true);
     setNoOptionsMessage("");
@@ -218,21 +227,11 @@ const SearchFields = ({ setTableData, setLoading }: SearchFieldsProps) => {
       >
         {/* Номер заказа */}
         <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-          <Autocomplete
-            size="small"
+          <CustomAutocomplete
+            label="Номер заказа"
             options={[]}
-            freeSolo
-            multiple
             value={formValues.co_name}
             onChange={handleArrayChange("co_name")}
-            renderTags={(value, getTagProps) =>
-              value.map((option, index) => (
-                <Chip size="small" label={option} {...getTagProps({ index })} />
-              ))
-            }
-            renderInput={(params) => (
-              <TextField label="Номер заказа" type="number" {...params} />
-            )}
           />
         </Grid>
 
@@ -245,32 +244,18 @@ const SearchFields = ({ setTableData, setLoading }: SearchFieldsProps) => {
             dateAdapter={AdapterDayjs}
             localeText={russianLocale}
           >
-            <DatePicker
-              sx={{ width: "50%" }}
-              label="Дата начала"
-              value={formValues.co_moment_begin}
-              onChange={handleDateChange("co_moment_begin")}
-              format="DD/MM/YYYY"
-              slotProps={{
-                textField: {
-                  error: errors,
-                  size: "small",
-                },
-              }}
-            />
-            <DatePicker
-              sx={{ width: "50%" }}
-              label="Дата окончания"
-              value={formValues.co_moment_end}
-              onChange={handleDateChange("co_moment_end")}
-              format="DD/MM/YYYY"
-              minDate={formValues.co_moment_begin}
-              slotProps={{
-                textField: {
-                  size: "small",
-                },
-              }}
-            />
+            {["co_moment_begin", "co_moment_end"].map((field, i) => (
+              <DatePicker
+                key={field}
+                sx={{ width: "50%" }}
+                label={i ? "Дата окончания" : "Дата начала"}
+                value={formValues[field]}
+                onChange={handleDateChange(field)}
+                format="DD/MM/YYYY"
+                minDate={i ? formValues.co_moment_begin : undefined}
+                slotProps={{ textField: { size: "small" } }}
+              />
+            ))}
           </LocalizationProvider>
         </Grid>
 
@@ -290,7 +275,7 @@ const SearchFields = ({ setTableData, setLoading }: SearchFieldsProps) => {
             }
             filterSelectedOptions
             value={formValues.cp_name.map((name) => ({ name, phone: "" }))}
-            onInputChange={(_, value) => fetchAutoComplete(value)}
+            onInputChange={(_, value) => fetchNameAutoComplete(value)}
             onChange={handleCpChange}
             renderTags={(value, getTagProps) =>
               value.map((option, index) => (
@@ -372,23 +357,6 @@ const SearchFields = ({ setTableData, setLoading }: SearchFieldsProps) => {
               />
             )}
           />
-
-          {/* <Autocomplete
-            size="small"
-            freeSolo
-            options={[]}
-            multiple
-            value={formValues.cp_phone}
-            onChange={handleArrayChange("cp_phone")}
-            renderTags={(value, getTagProps) =>
-              value.map((option, index) => (
-                <Chip size="small" label={option} {...getTagProps({ index })} />
-              ))
-            }
-            renderInput={(params) => (
-              <TextField {...params} label="Телефон контрагента" fullWidth />
-            )}
-          /> */}
         </Grid>
 
         {/* Завел заявку, Заявка закреплена, Клиент закреплен */}
@@ -398,35 +366,38 @@ const SearchFields = ({ setTableData, setLoading }: SearchFieldsProps) => {
               key={field}
               size={{ xs: 12, sm: 6, md: index === 2 ? 2.6 : 2.7 }}
             >
-              <Autocomplete
-                size="small"
-                disablePortal
+              <CustomAutocomplete
+                label={field}
                 options={autoCompleteName}
-                multiple
-                noOptionsText="Сотрудник не найден"
-                value={autoCompleteName.filter((option) =>
-                  formValues[field as keyof FormValues]?.includes(option || "")
-                )}
+                value={formValues[field as keyof FormValues]}
                 onChange={handleArrayChange(field as keyof FormValues)}
-                renderTags={(value, getTagProps) =>
-                  value.map((option, index) => (
-                    <Chip
-                      size="small"
-                      label={option}
-                      {...getTagProps({ index })}
-                    />
-                  ))
-                }
-                renderInput={(params) => (
-                  <TextField {...params} label={field} fullWidth />
-                )}
               />
             </Grid>
           )
         )}
+
+        <Collapse timeout={500} in={addFields} sx={{ width: "100%" }}>
+          {addFields && (
+            <Grid
+              container
+              spacing={{ xs: 2, md: 1 }}
+              columns={{ xs: 4, md: 8 }}
+            >
+              <AddedSearchFields
+                formValues={formValues}
+                handleArrayChange={handleArrayChange}
+              />
+            </Grid>
+          )}
+        </Collapse>
       </Grid>
 
-      <CustomButtons handleSearch={handleSearch} handleDelete={handleDelete} />
+      <CustomButtons
+        handleSearch={handleSearch}
+        handleDelete={handleDelete}
+        setAddFields={setAddFields}
+        addFields={addFields}
+      />
     </Box>
   );
 };

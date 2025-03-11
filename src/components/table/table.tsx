@@ -56,6 +56,11 @@ const Table = ({ tableData, loading }: TableProps) => {
         size: 50,
       },
       {
+        accessorKey: "co_attribures.Новый клиент",
+        header: "Новый клиент",
+        size: 50,
+      },
+      {
         accessorKey: "co_attribures.Завел заявку",
         header: "Завел заявку",
         size: 120,

@@ -17,6 +17,7 @@ export interface OrderData {
     "Способ доставки NEW"?: string | null;
     "Ответственный менеджер"?: string | null;
     "Трек-номер"?: string | null;
+    "Новый клиент"?: string | null;
   }; // Дополнительные атрибуты
   co_positions: {
     code: string;

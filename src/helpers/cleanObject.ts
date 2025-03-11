@@ -1,5 +1,5 @@
-export const CleanObject = (obj) => {
-  const cleaned = {};
+export const CleanObject = (obj: any) => {
+  const cleaned: Record<string, any> = {};
   for (const key in obj) {
     if (
       obj[key] !== "" &&

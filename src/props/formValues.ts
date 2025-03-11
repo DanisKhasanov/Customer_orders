@@ -7,4 +7,9 @@ export interface FormValues {
   "Завел заявку": string[];
   "Заявка закреплена": string[];
   "Клиент закреплен": string[];
+  state_name: string[];
+  shipmentAddress: string[];
+  "Новый клиент": string[];
+  salesChannel_name: string[];
+  closing_application: string[];
 }
