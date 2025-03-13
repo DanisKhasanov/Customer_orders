@@ -1,17 +1,11 @@
 import { Box, Button } from "@mui/material";
-// import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-// import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 
 export const CustomButtons = ({
   handleSearch,
   handleDelete,
-  // setAddFields,
-  // addFields,
 }: {
   handleSearch: () => void;
   handleDelete: () => void;
-  setAddFields: React.Dispatch<React.SetStateAction<boolean>>;
-  addFields: boolean;
 }) => {
   return (
     <Box
@@ -38,15 +32,6 @@ export const CustomButtons = ({
         >
           Поиск
         </Button>
-        {/* <Button
-          variant="outlined"
-          color="inherit"
-          onClick={() => setAddFields((prev) => !prev)}
-          sx={{ textTransform: "none" }}
-          endIcon={addFields ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-        >
-          Дополнительные фильтры
-        </Button> */}
 
         <Button
           variant="outlined"

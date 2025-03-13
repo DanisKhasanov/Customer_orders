@@ -12,7 +12,6 @@ const api = axios.create({
 
 export const postData = async (formValues: any) => {
   try {
-    console.log(formValues);
     const response = await api.post("/orders/", formValues);
     return response.data;
   } catch (error) {

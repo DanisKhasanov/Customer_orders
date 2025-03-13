@@ -1,10 +1,16 @@
 import React, { useCallback, useEffect, useState } from "react";
-import TextField from "@mui/material/TextField";
+import {
+  Box,
+  Autocomplete,
+  Chip,
+  CircularProgress,
+  TextField,
+} from "@mui/material";
 import Grid from "@mui/material/Grid2";
-import { Box, Autocomplete, Chip, CircularProgress } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { debounce } from "@mui/material/utils";
 import { getAutoComplete, postData } from "@/api/api";
 import {
   autoCompleteName,
@@ -12,13 +18,13 @@ import {
   russianLocale,
   CleanObject,
   getToday,
+  emptyFields,
 } from "@/helpers/index";
+import useCustomSnackbar from "@/hooks/useCustomSnackbar";
 import { FormValues, SearchFieldsProps } from "@/props/index";
 import { CustomButtons } from "../button/customButtons";
-import useCustomSnackbar from "@/hooks/useCustomSnackbar";
 import { AddedSearchFields } from "./addedSearchFields";
 import { CustomAutocomplete } from "../autocomplete/customAutocomplete";
-import { debounce } from "@mui/material/utils";
 
 const SearchFields = ({ setTableData, setLoading }: SearchFieldsProps) => {
   const [formValues, setFormValues] = useState<FormValues>(initialValues);
@@ -28,7 +34,6 @@ const SearchFields = ({ setTableData, setLoading }: SearchFieldsProps) => {
   );
   const [cpLoading, setCpLoading] = useState(false);
   const [noOptionsMessage, setNoOptionsMessage] = useState<string>("");
-  const [addFields, setAddFields] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -110,6 +115,15 @@ const SearchFields = ({ setTableData, setLoading }: SearchFieldsProps) => {
   };
 
   const handleSearch = async () => {
+    const res = emptyFields(formValues);
+
+    if (!res) {
+      showSnackbar("Пожалуйста, заполните хотя бы одно поле", {
+        variant: "error",
+      });
+      return;
+    }
+
     try {
       setLoading(true);
 
@@ -176,6 +190,7 @@ const SearchFields = ({ setTableData, setLoading }: SearchFieldsProps) => {
             onChange={handleArrayChange("co_name")}
           />
         </Grid>
+
         {/* Период */}
         <Grid
           size={{ xs: 12, sm: 6, md: 4 }}
@@ -199,6 +214,7 @@ const SearchFields = ({ setTableData, setLoading }: SearchFieldsProps) => {
             ))}
           </LocalizationProvider>
         </Grid>
+
         {/* Контрагент и Телефон контрагента */}
         {(["cp_name", "cp_phone"] as const).map((field, i) => (
           <Grid key={field} size={{ xs: 12, sm: 6, md: 4 }}>
@@ -266,6 +282,7 @@ const SearchFields = ({ setTableData, setLoading }: SearchFieldsProps) => {
             />
           </Grid>
         ))}
+
         {/* Завел заявку, Заявка закреплена, Клиент закреплен */}
         {["Завел заявку", "Заявка закреплена", "Клиент закреплен"].map(
           (field, index) => (
@@ -276,12 +293,15 @@ const SearchFields = ({ setTableData, setLoading }: SearchFieldsProps) => {
               <CustomAutocomplete
                 label={field}
                 options={autoCompleteName}
-                value={Array.isArray(formValues[field]) ? formValues[field] : []}
+                value={
+                  Array.isArray(formValues[field]) ? formValues[field] : []
+                }
                 onChange={handleArrayChange(field as keyof FormValues)}
               />
             </Grid>
           )
         )}
+
         {/* Дополнительные поля */}
         <AddedSearchFields
           formValues={formValues}
@@ -289,12 +309,7 @@ const SearchFields = ({ setTableData, setLoading }: SearchFieldsProps) => {
         />
       </Grid>
 
-      <CustomButtons
-        handleSearch={handleSearch}
-        handleDelete={handleDelete}
-        setAddFields={setAddFields}
-        addFields={addFields}
-      />
+      <CustomButtons handleSearch={handleSearch} handleDelete={handleDelete} />
     </Box>
   );
 };

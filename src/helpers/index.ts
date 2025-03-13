@@ -1,5 +1,6 @@
 export * from "./autoComplete";
 export * from "./cleanObject";
+export * from "./emptyFields";
 export * from "./formatPrice"
 export * from "./getToday";
 export * from "./initValues";
