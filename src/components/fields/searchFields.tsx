@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import TextField from "@mui/material/TextField";
 import Grid from "@mui/material/Grid2";
 import {
@@ -28,7 +28,6 @@ import { CustomAutocomplete } from "../autocomplete/customAutocomplete";
 const SearchFields = ({ setTableData, setLoading }: SearchFieldsProps) => {
   const [formValues, setFormValues] = useState<FormValues>(initialValues);
   const { showSnackbar } = useCustomSnackbar();
-  const [errors, setErrors] = useState(false);
   const [cpOptions, setCpOptions] = useState<{ name: string; phone: string }[]>(
     []
   );
@@ -61,53 +60,45 @@ const SearchFields = ({ setTableData, setLoading }: SearchFieldsProps) => {
     fetchData();
   }, []);
 
-  const fetchNameAutoComplete = async (query: string) => {
-    if (query.length < 3) return;
-    setCpLoading(true);
-    setNoOptionsMessage("");
-    try {
-      const response = await getAutoComplete(query, "cp_name");
-      if (response.length === 0) {
-        setCpOptions([]);
-        setNoOptionsMessage("Контрагенты не найдены");
-        return;
-      }
-
-      setCpOptions(
-        response.map(([name, phone]: [string, string]) => ({ name, phone }))
-      );
-    } catch {
-      showSnackbar("Ошибка при загрузке контрагентов", { variant: "error" });
-    } finally {
-      setCpLoading(false);
-    }
-  };
-
-  const fetchPhoneAutoComplete = async (query: string) => {
-    if (query.length < 3) return;
-    setCpLoading(true);
-    setNoOptionsMessage("");
-    try {
-      const response = await getAutoComplete(query, "cp_phone"); // Запрос по телефону
-      if (response.length === 0) {
-        setCpOptions([]);
-        setNoOptionsMessage("Контрагенты не найдены");
-        return;
-      }
-
-      setCpOptions(
-        response.map(([phone, name]: [string, string]) => ({ phone, name }))
-      );
-    } catch {
-      showSnackbar("Ошибка при загрузке контрагентов", { variant: "error" });
-    } finally {
-      setCpLoading(false);
-    }
-  };
-
   const handleDelete = () => {
     setFormValues(initialValues);
   };
+
+  const fetchAutoComplete = useCallback(
+    async (query: string, field: "cp_name" | "cp_phone") => {
+      if (query.length < 3) return;
+      setCpLoading(true);
+      setNoOptionsMessage("");
+      try {
+        const response = await getAutoComplete(query, field);
+        if (!response.length) {
+          setCpOptions([]);
+          setNoOptionsMessage("Контрагенты не найдены");
+          return;
+        }
+        setCpOptions(
+          response.map(([key, value]) =>
+            field === "cp_name"
+              ? { name: key, phone: value }
+              : { name: value, phone: key }
+          )
+        );
+      } catch {
+        showSnackbar("Ошибка при загрузке контрагентов", { variant: "error" });
+      } finally {
+        setCpLoading(false);
+      }
+    },
+    []
+  );
+
+  const handleCpChange =
+    (key: "cp_name" | "cp_phone") => (_: any, newValue: any) => {
+      setFormValues((prev) => {
+        const updatedValues = newValue.map((item: any) => item[key.slice(3)]);
+        return { ...prev, [key]: updatedValues };
+      });
+    };
 
   const handleArrayChange =
     (key: keyof FormValues) => (_: any, newValue: any) => {
@@ -116,58 +107,6 @@ const SearchFields = ({ setTableData, setLoading }: SearchFieldsProps) => {
         [key]: newValue,
       }));
     };
-
-  const handleCpChange = (_: any, newValue: any) => {
-    setFormValues((prev) => {
-      // Получаем новые имена и их соответствующие телефоны
-      const newNames = newValue.map((item: any) => item.name);
-      const newPhones = newNames.map(
-        (name: string) =>
-          cpOptions.find((opt) => opt.name === name)?.phone || ""
-      );
-
-      // Объединяем старые телефоны с новыми (если они еще не добавлены)
-      const updatedPhones = [...prev.cp_phone];
-      newNames.forEach((name: string, index: number) => {
-        const existingIndex = prev.cp_name.indexOf(name);
-        if (existingIndex === -1) {
-          updatedPhones.push(newPhones[index]);
-        }
-      });
-
-      return {
-        ...prev,
-        cp_name: newNames,
-        cp_phone: updatedPhones.slice(0, newNames.length), // Синхронизируем длину массивов
-      };
-    });
-  };
-
-  const handleCpPhoneChange = (_: any, newValue: any) => {
-    setFormValues((prev) => {
-      // Получаем новые имена и их соответствующие телефоны
-      const newPhones = newValue.map((item: any) => item.phone);
-      const newNames = newPhones.map(
-        (phone: string) =>
-          cpOptions.find((opt) => opt.phone === phone)?.name || ""
-      );
-
-      // Объединяем старые телефоны с новыми (если они еще не добавлены)
-      const updatedPhones = [...prev.cp_name];
-      newPhones.forEach((name: string, index: number) => {
-        const existingIndex = prev.cp_phone.indexOf(name);
-        if (existingIndex === -1) {
-          updatedPhones.push(newNames[index]);
-        }
-      });
-
-      return {
-        ...prev,
-        cp_phone: newPhones,
-        cp_name: newNames.slice(0, newPhones.length),
-      };
-    });
-  };
 
   const handleDateChange = (key: keyof FormValues) => (date: any) => {
     setFormValues((prev) => ({
@@ -194,7 +133,6 @@ const SearchFields = ({ setTableData, setLoading }: SearchFieldsProps) => {
         showSnackbar("Сначала выберите дату начала", {
           variant: "error",
         });
-        setErrors(true);
         return;
       }
       // Очищаем объект от пустых значений
@@ -259,105 +197,54 @@ const SearchFields = ({ setTableData, setLoading }: SearchFieldsProps) => {
           </LocalizationProvider>
         </Grid>
 
-        {/* Контрагент */}
-        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-          <Autocomplete
-            multiple
-            freeSolo
-            size="small"
-            loading={cpLoading}
-            options={cpOptions.length > 0 ? cpOptions : []}
-            noOptionsText={noOptionsMessage}
-            getOptionLabel={(option) =>
-              typeof option === "string"
-                ? option
-                : `${option.name} (${option.phone})`
-            }
-            filterSelectedOptions
-            value={formValues.cp_name.map((name) => ({ name, phone: "" }))}
-            onInputChange={(_, value) => fetchNameAutoComplete(value)}
-            onChange={handleCpChange}
-            renderTags={(value, getTagProps) =>
-              value.map((option, index) => (
-                <Chip
-                  label={option.name}
-                  size="small"
-                  {...getTagProps({ index })}
-                />
-              ))
-            }
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                label="Контрагент"
-                fullWidth
-                slotProps={{
-                  input: {
+        {/* Контрагент и Телефон контрагента */}
+        {["cp_name", "cp_phone"].map((field, i) => (
+          <Grid key={field} size={{ xs: 12, sm: 6, md: 4 }}>
+            <Autocomplete
+              multiple
+              freeSolo
+              size="small"
+              loading={cpLoading}
+              options={cpOptions}
+              noOptionsText={noOptionsMessage}
+              getOptionLabel={(option) =>
+                `${option[i ? "phone" : "name"]} (${
+                  option[i ? "name" : "phone"]
+                })`
+              }
+              filterSelectedOptions
+              value={formValues[field].map((val) => ({
+                [i ? "phone" : "name"]: val,
+                [i ? "name" : "phone"]: "",
+              }))}
+              onInputChange={(_, value) => fetchAutoComplete(value, field)}
+              onChange={handleCpChange(field ) }
+              renderTags={(value, getTagProps) =>
+                value.map((option, index) => (
+                  <Chip
+                    key={index}
+                    label={option[i ? "phone" : "name"]}
+                    size="small"
+                    {...getTagProps({ index })}
+                  />
+                ))
+              }
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label={i ? "Телефон контрагента" : "Контрагент"}
+                  fullWidth
+                  InputProps={{
                     ...params.InputProps,
-                    endAdornment: (
-                      <>
-                        {cpLoading ? (
-                          <CircularProgress color="inherit" size={20} />
-                        ) : null}
-                        {params.InputProps?.endAdornment}
-                      </>
+                    endAdornment: cpLoading && (
+                      <CircularProgress color="inherit" size={20} />
                     ),
-                  },
-                }}
-              />
-            )}
-          />
-        </Grid>
-
-        {/* Телефон контрагента */}
-        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-          <Autocomplete
-            multiple
-            freeSolo
-            size="small"
-            loading={cpLoading}
-            options={cpOptions.length > 0 ? cpOptions : []}
-            noOptionsText={noOptionsMessage}
-            getOptionLabel={(option) =>
-              typeof option === "string"
-                ? option
-                : `${option.phone} (${option.name})`
-            }
-            filterSelectedOptions
-            value={formValues.cp_phone.map((phone) => ({ name: "", phone }))}
-            onInputChange={(_, value) => fetchPhoneAutoComplete(value)}
-            onChange={handleCpPhoneChange}
-            renderTags={(value, getTagProps) =>
-              value.map((option, index) => (
-                <Chip
-                  label={option.phone}
-                  size="small"
-                  {...getTagProps({ index })}
+                  }}
                 />
-              ))
-            }
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                label="Телефон контрагента"
-                fullWidth
-                slotProps={{
-                  input: {
-                    ...params.InputProps,
-                    endAdornment: (
-                      <>
-                        {cpLoading ? (
-                          <CircularProgress color="inherit" size={20} />
-                        ) : null}
-                        {params.InputProps?.endAdornment}
-                      </>
-                    ),
-                  },
-                }}
-              />
-            )}
-          />
-        </Grid>
+              )}
+            />
+          </Grid>
+        ))}
 
         {/* Завел заявку, Заявка закреплена, Клиент закреплен */}
         {["Завел заявку", "Заявка закреплена", "Клиент закреплен"].map(
@@ -375,21 +262,21 @@ const SearchFields = ({ setTableData, setLoading }: SearchFieldsProps) => {
             </Grid>
           )
         )}
-
-        <Collapse timeout={500} in={addFields} sx={{ width: "100%" }}>
-          {addFields && (
-            <Grid
+        {/* Дополнительные поля */}
+        {/* <Collapse timeout={500} in={addFields} sx={{ width: "100%" }}> */}
+        {/* {addFields && ( */}
+        {/* <Grid
               container
               spacing={{ xs: 2, md: 1 }}
               columns={{ xs: 4, md: 8 }}
-            >
-              <AddedSearchFields
-                formValues={formValues}
-                handleArrayChange={handleArrayChange}
-              />
-            </Grid>
-          )}
-        </Collapse>
+            > */}
+        <AddedSearchFields
+          formValues={formValues}
+          handleArrayChange={handleArrayChange}
+        />
+        {/* </Grid> */}
+        {/* )} */}
+        {/* </Collapse> */}
       </Grid>
 
       <CustomButtons

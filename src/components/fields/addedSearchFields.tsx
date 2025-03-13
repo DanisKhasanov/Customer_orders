@@ -3,7 +3,7 @@ import {
   autoCompeleteStatus,
   autoCompeleteSalesChannel,
   autoCompeleteNewClient,
-  // autoCompeleteClosingApplication,
+  autoCompeleteClosingApplication,
 } from "@/helpers/index";
 import { AddSearchFieldsProps } from "@/props/addFileds";
 import React from "react";
@@ -17,7 +17,6 @@ export const AddedSearchFields = React.memo(
         options: autoCompeleteStatus,
         key: "state_name",
       },
-      { label: "Адрес доставки", options: [], key: "shipmentAddress" },
       {
         label: "Новый клиент",
         options: autoCompeleteNewClient,
@@ -28,14 +27,12 @@ export const AddedSearchFields = React.memo(
         options: autoCompeleteSalesChannel,
         key: "salesChannel_name",
       },
-      //   { label: "Бесплатная доставка", options: [], key: "free_shipping" },
-      //   {
-      //     label: "Причина закрытия заявки",
-      //     options: autoCompeleteClosingApplication,
-      //     key: "closing_application",
-      //   },
-      //   { label: "Поиск по товару и группе", options: [], key: "" },
-      //   { label: "Оплачено", options: [], key: "" },
+      {
+        label: "Причина закрытия заявки",
+        options: autoCompeleteClosingApplication,
+        key: "Причина закрытия заявки",
+      },
+      // { label: "Поиск по товару и группе", options: [], key: "" },
     ];
 
     return (
@@ -45,8 +42,8 @@ export const AddedSearchFields = React.memo(
             <CustomAutocomplete
               label={label}
               options={options}
-              value={formValues[key]}
-              onChange={handleArrayChange(key )}
+              value={formValues[key as keyof typeof formValues]}
+              onChange={handleArrayChange(key as keyof typeof formValues)}
             />
           </Grid>
         ))}

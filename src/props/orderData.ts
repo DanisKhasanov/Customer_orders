@@ -7,9 +7,11 @@ export interface OrderData {
   co_created: string; // Дата создания
   salesChannel_name: string; // Канал продаж
   co_name: string; // Номер заказа
+  state_name: string; //Статус заказа
+  shipmentAddress: string // Адрес доставки
   co_attribures: {
-    "Сборщик"?: string | null;
-    "Упаковщик"?: string | null;
+    Сборщик?: string | null;
+    Упаковщик?: string | null;
     "Завел заявку"?: string | null;
     "СПОСОБ ОПЛАТЫ"?: string | null;
     "Клиент закреплен"?: string | null;
@@ -18,6 +20,8 @@ export interface OrderData {
     "Ответственный менеджер"?: string | null;
     "Трек-номер"?: string | null;
     "Новый клиент"?: string | null;
+    "Бесплатная доставка"?: string | null;
+    "Причина закрытия заявки"?: string | null;
   }; // Дополнительные атрибуты
   co_positions: {
     code: string;
@@ -25,6 +29,6 @@ export interface OrderData {
     price: number;
     discount: number;
     quantity: number;
-    uom: string
+    uom: string;
   }[]; // Товары
 }

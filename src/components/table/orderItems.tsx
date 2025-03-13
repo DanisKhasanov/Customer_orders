@@ -1,4 +1,4 @@
-import { style } from "@/helpers/styleFontSize";
+import { formatPrice, style } from "@/helpers/index";
 import { OrderItemsProps } from "@/props/orderItemsProps";
 import {
   Table,
@@ -14,9 +14,10 @@ export const OrderItems = ({ itemDetails }: OrderItemsProps) => {
     (sum: number, item: any) => sum + Number(item.quantity),
     0
   );
-  const totalPrice = itemDetails
-    .reduce((sum: number, item: any) => sum + Number(item.total), 0)
-    .toFixed(2);
+  const totalPrice = itemDetails.reduce(
+    (sum: number, item: any) => sum + Number(item.total),
+    0
+  );
 
   return (
     <TableContainer
@@ -25,6 +26,7 @@ export const OrderItems = ({ itemDetails }: OrderItemsProps) => {
         justifyContent: "center",
         alignItems: "center",
         border: "1px solid lightgray",
+        width: "60vw",
       }}
     >
       <Table size="small">
@@ -53,10 +55,10 @@ export const OrderItems = ({ itemDetails }: OrderItemsProps) => {
               <TableCell sx={style}>{item.quantity}</TableCell>
               <TableCell sx={style}>{item.unit}</TableCell>
               <TableCell sx={style}>
-                {Number(item.price).toFixed(2)} руб.
+                {formatPrice(Number(item.price))}
               </TableCell>
               <TableCell sx={style}>
-                {Number(item.total).toFixed(2)} руб.
+                {formatPrice(Number(item.total))}
               </TableCell>
             </TableRow>
           ))}
@@ -65,7 +67,7 @@ export const OrderItems = ({ itemDetails }: OrderItemsProps) => {
             <TableCell sx={style}>{totalQuantity}</TableCell>
             <TableCell sx={style}></TableCell>
             <TableCell sx={style}></TableCell>
-            <TableCell sx={style}>{totalPrice} руб.</TableCell>
+            <TableCell sx={style}>{formatPrice(totalPrice)}</TableCell>
           </TableRow>
         </TableBody>
       </Table>

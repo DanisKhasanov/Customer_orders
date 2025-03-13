@@ -1,12 +1,12 @@
 import { Box, Button } from "@mui/material";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import ExpandLessIcon from "@mui/icons-material/ExpandLess";
+// import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+// import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 
 export const CustomButtons = ({
   handleSearch,
   handleDelete,
-  setAddFields,
-  addFields,
+  // setAddFields,
+  // addFields,
 }: {
   handleSearch: () => void;
   handleDelete: () => void;
@@ -38,7 +38,7 @@ export const CustomButtons = ({
         >
           Поиск
         </Button>
-        <Button
+        {/* <Button
           variant="outlined"
           color="inherit"
           onClick={() => setAddFields((prev) => !prev)}
@@ -46,11 +46,11 @@ export const CustomButtons = ({
           endIcon={addFields ? <ExpandLessIcon /> : <ExpandMoreIcon />}
         >
           Дополнительные фильтры
-        </Button>
+        </Button> */}
 
         <Button
           variant="outlined"
-          color="error"
+          // color="error"
           onClick={handleDelete}
           sx={{ textTransform: "none", flex: 1 }}
         >

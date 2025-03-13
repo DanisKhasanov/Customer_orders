@@ -8,6 +8,8 @@ import { MRT_Localization_RU } from "material-react-table/locales/ru";
 import { OrderItems } from "./orderItems";
 import { OrderData, TableProps } from "@/props/index";
 import dayjs from "dayjs";
+import { StatusColor,formatPrice } from "@/helpers/index";
+import { Box } from "@mui/material";
 
 const Table = ({ tableData, loading }: TableProps) => {
   const totalOrders = tableData.length;
@@ -20,7 +22,7 @@ const Table = ({ tableData, loading }: TableProps) => {
       {
         accessorKey: "co_name",
         header: "Номер",
-        size: 50,
+        size: 70,
         Footer: () => <>Всего: {totalOrders}</>,
       },
       {
@@ -28,12 +30,12 @@ const Table = ({ tableData, loading }: TableProps) => {
         header: "Дата",
         Cell: ({ cell }) =>
           dayjs(cell.getValue() as string).format("DD.MM.YYYY HH:mm"),
-        size: 80,
+        size: 100,
       },
       {
         accessorKey: "cp_name",
         header: "Контрагент",
-        size: 150,
+        size: 210,
       },
       {
         accessorKey: "cp_phone",
@@ -43,62 +45,105 @@ const Table = ({ tableData, loading }: TableProps) => {
       {
         accessorKey: "payedSum",
         header: "Оплачено",
-        Cell: ({ cell }) => {
-          const value = cell.getValue() as number;
-          return `${(value / 100).toFixed(2)} р.`;
-        },
-        size: 50,
-        Footer: () => <>{`${(totalPaid / 100).toFixed(2)} р.`}</>,
+        Cell: ({ cell }) => formatPrice(cell.getValue() as number / 100),
+        size: 100,
+        Footer: () => <>{formatPrice(totalPaid / 100)}</>,
       },
+      {
+        accessorKey: "state_name",
+        header: "Статус",
+        size: 130,
+        Cell: ({ cell }) => {
+          const status = cell.getValue<string>();
+          const backgroundColor = StatusColor[status];
+          return (
+            <Box
+              component="span"
+              sx={{
+                backgroundColor,
+                borderRadius: "0.25rem",
+                color: "#fff",
+                p: "1px 5px 1px 5px",
+              }}
+            >
+              {status}
+            </Box>
+          );
+        },
+      },
+ 
       {
         accessorKey: "salesChannel_name",
         header: "Канал продаж",
-        size: 50,
+        size: 130,
       },
+
       {
         accessorKey: "co_attribures.Новый клиент",
         header: "Новый клиент",
-        size: 50,
+        size: 40,
       },
       {
         accessorKey: "co_attribures.Завел заявку",
         header: "Завел заявку",
-        size: 120,
+        size: 140,
       },
       {
         accessorKey: "co_attribures.Заявка закреплена",
         header: "Заявка закреплена",
-        size: 120,
+        size: 160,
       },
       {
         accessorKey: "co_attribures.Клиент закреплен",
         header: "Клиент закреплен",
-        size: 120,
+        size: 160,
       },
       {
         accessorKey: "co_attribures.Способ доставки NEW",
-        header: "Способ доставки NEW",
-        size: 50,
+        header: "Способ доставки",
+        size: 150,
       },
       {
         accessorKey: "co_attribures.Трек-номер",
         header: "Трек-номер",
-        size: 50,
+        size: 110,
+      },
+      {
+        accessorKey: "co_attribures.Причина закрытия заявки",
+        header: "Причина закрытия заявки",
+        size: 210,
+      },
+      {
+        accessorKey: "shipmentAddress",
+        header: "Адрес доставки",
+        size: 200,
+      },
+      {
+        accessorKey: "co_attribures.Бесплатная доставка",
+        header: "Бесплатная доставка",
+        size: 180,
       },
     ],
-    [totalOrders, totalPaid] // Зависимости для пересчета footer при изменении данных
+    [totalOrders, totalPaid]
   );
 
   const table = useMaterialReactTable({
     columns,
     data: tableData,
     initialState: {
-      pagination: { pageSize: 19, pageIndex: 0 },
+      pagination: { pageSize: 15, pageIndex: 0 },
       density: "compact",
     },
     state: { isLoading: loading },
+
+    enableFullScreenToggle: false,
+    enableColumnResizing: true,
+    layoutMode: "grid",
+    enableColumnFilters: false,
+    enableDensityToggle: false,
+
     enableColumnActions: false,
-    enableTopToolbar: false,
+    // enableTopToolbar: false,
     localization: MRT_Localization_RU,
     paginationDisplayMode: "pages",
     muiTableHeadCellProps: {
