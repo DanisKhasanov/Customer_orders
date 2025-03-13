@@ -1,4 +1,6 @@
-export const initialValues = {
+import { FormValues } from "@/props";
+
+export const initialValues: FormValues = {
   co_name: [], // Номер заказа
   cp_name: [], // Контрагент (имя)
   cp_phone: [], // Телефон контрагента
@@ -7,9 +9,9 @@ export const initialValues = {
   "Завел заявку": [],
   "Заявка закреплена": [],
   "Клиент закреплен": [],
-  state_name: [], // Статус заказа
+  order_status: [], // Статус заказа
   shipmentAddress: [], // Адрес доставки
   "Новый клиент": [], // Новый клиент
-  salesChannel_name: [], //Канал продаж
-  closing_application: [], // причины закрытия заявки
+  salesChannel_name: [], // Канал продаж
+  closing_application: [], // Причины закрытия заявки
 };

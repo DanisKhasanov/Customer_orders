@@ -1,12 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import TextField from "@mui/material/TextField";
 import Grid from "@mui/material/Grid2";
-import {
-  Box,
-  Autocomplete,
-  Chip,
-  CircularProgress,
-} from "@mui/material";
+import { Box, Autocomplete, Chip, CircularProgress } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
@@ -118,7 +113,6 @@ const SearchFields = ({ setTableData, setLoading }: SearchFieldsProps) => {
     try {
       setLoading(true);
 
-      // Форматируем даты
       const formattedValues = {
         ...formValues,
         co_moment_begin: formValues.co_moment_begin
@@ -134,10 +128,8 @@ const SearchFields = ({ setTableData, setLoading }: SearchFieldsProps) => {
         });
         return;
       }
-      // Очищаем объект от пустых значений
       const cleanedValues = CleanObject(formattedValues);
 
-      // Отправляем только заполненные данные
       const response = await postData(cleanedValues);
       setTableData(response);
     } catch {
@@ -184,7 +176,6 @@ const SearchFields = ({ setTableData, setLoading }: SearchFieldsProps) => {
             onChange={handleArrayChange("co_name")}
           />
         </Grid>
-
         {/* Период */}
         <Grid
           size={{ xs: 12, sm: 6, md: 4 }}
@@ -199,8 +190,8 @@ const SearchFields = ({ setTableData, setLoading }: SearchFieldsProps) => {
                 key={field}
                 sx={{ width: "50%" }}
                 label={i ? "Дата окончания" : "Дата начала"}
-                value={formValues[field]}
-                onChange={handleDateChange(field)}
+                value={formValues[field as keyof FormValues]}
+                onChange={handleDateChange(field as keyof FormValues)}
                 format="DD/MM/YYYY"
                 minDate={i ? formValues.co_moment_begin : undefined}
                 slotProps={{ textField: { size: "small" } }}
@@ -208,9 +199,8 @@ const SearchFields = ({ setTableData, setLoading }: SearchFieldsProps) => {
             ))}
           </LocalizationProvider>
         </Grid>
-
         {/* Контрагент и Телефон контрагента */}
-        {["cp_name", "cp_phone"].map((field, i) => (
+        {(["cp_name", "cp_phone"] as const).map((field, i) => (
           <Grid key={field} size={{ xs: 12, sm: 6, md: 4 }}>
             <Autocomplete
               multiple
@@ -221,13 +211,16 @@ const SearchFields = ({ setTableData, setLoading }: SearchFieldsProps) => {
               loading={cpLoading}
               options={cpOptions}
               noOptionsText={noOptionsMessage}
-              getOptionLabel={(option) =>
-                `${option[i ? "phone" : "name"]} (${
+              getOptionLabel={(option) => {
+                if (typeof option === "string") {
+                  return option;
+                }
+                return `${option[i ? "phone" : "name"]} (${
                   option[i ? "name" : "phone"]
-                })`
-              }
+                })`;
+              }}
               filterSelectedOptions
-              value={formValues[field].map((val) => ({
+              value={formValues[field].map((val: string) => ({
                 [i ? "phone" : "name"]: val,
                 [i ? "name" : "phone"]: "",
               }))}
@@ -273,7 +266,6 @@ const SearchFields = ({ setTableData, setLoading }: SearchFieldsProps) => {
             />
           </Grid>
         ))}
-
         {/* Завел заявку, Заявка закреплена, Клиент закреплен */}
         {["Завел заявку", "Заявка закреплена", "Клиент закреплен"].map(
           (field, index) => (
@@ -284,13 +276,12 @@ const SearchFields = ({ setTableData, setLoading }: SearchFieldsProps) => {
               <CustomAutocomplete
                 label={field}
                 options={autoCompleteName}
-                value={formValues[field as keyof FormValues]}
+                value={Array.isArray(formValues[field]) ? formValues[field] : []}
                 onChange={handleArrayChange(field as keyof FormValues)}
               />
             </Grid>
           )
         )}
-
         {/* Дополнительные поля */}
         <AddedSearchFields
           formValues={formValues}

@@ -42,7 +42,7 @@ export const AddedSearchFields = React.memo(
             <CustomAutocomplete
               label={label}
               options={options}
-              value={formValues[key as keyof typeof formValues]}
+              value={Array.isArray(formValues[key]) ? formValues[key] : []}
               onChange={handleArrayChange(key as keyof typeof formValues)}
             />
           </Grid>
