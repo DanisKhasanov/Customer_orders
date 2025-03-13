@@ -8,7 +8,7 @@ import { MRT_Localization_RU } from "material-react-table/locales/ru";
 import { OrderItems } from "./orderItems";
 import { OrderData, TableProps } from "@/props/index";
 import dayjs from "dayjs";
-import { StatusColor,formatPrice } from "@/helpers/index";
+import { StatusColor, formatPrice } from "@/helpers/index";
 import { Box } from "@mui/material";
 
 const Table = ({ tableData, loading }: TableProps) => {
@@ -25,6 +25,7 @@ const Table = ({ tableData, loading }: TableProps) => {
         size: 70,
         Footer: () => <>Всего: {totalOrders}</>,
       },
+
       {
         accessorKey: "co_moment",
         header: "Дата",
@@ -45,14 +46,14 @@ const Table = ({ tableData, loading }: TableProps) => {
       {
         accessorKey: "payedSum",
         header: "Оплачено",
-        Cell: ({ cell }) => formatPrice(cell.getValue() as number / 100),
+        Cell: ({ cell }) => formatPrice((cell.getValue() as number) / 100),
         size: 100,
         Footer: () => <>{formatPrice(totalPaid / 100)}</>,
       },
       {
         accessorKey: "state_name",
         header: "Статус",
-        size: 130,
+        size: 200,
         Cell: ({ cell }) => {
           const status = cell.getValue<string>();
           const backgroundColor = StatusColor[status];
@@ -71,7 +72,7 @@ const Table = ({ tableData, loading }: TableProps) => {
           );
         },
       },
- 
+
       {
         accessorKey: "salesChannel_name",
         header: "Канал продаж",
@@ -133,6 +134,12 @@ const Table = ({ tableData, loading }: TableProps) => {
     initialState: {
       pagination: { pageSize: 15, pageIndex: 0 },
       density: "compact",
+      sorting: [
+        {
+          id: "co_name",
+          desc: true,
+        },
+      ],
     },
     state: { isLoading: loading },
 
@@ -141,7 +148,6 @@ const Table = ({ tableData, loading }: TableProps) => {
     layoutMode: "grid",
     enableColumnFilters: false,
     enableDensityToggle: false,
-
     enableColumnActions: false,
     // enableTopToolbar: false,
     localization: MRT_Localization_RU,

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import TextField from "@mui/material/TextField";
 import Grid from "@mui/material/Grid2";
 import {
@@ -6,7 +6,6 @@ import {
   Autocomplete,
   Chip,
   CircularProgress,
-  Collapse,
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
@@ -24,6 +23,7 @@ import { CustomButtons } from "../button/customButtons";
 import useCustomSnackbar from "@/hooks/useCustomSnackbar";
 import { AddedSearchFields } from "./addedSearchFields";
 import { CustomAutocomplete } from "../autocomplete/customAutocomplete";
+import { debounce } from "@mui/material/utils";
 
 const SearchFields = ({ setTableData, setLoading }: SearchFieldsProps) => {
   const [formValues, setFormValues] = useState<FormValues>(initialValues);
@@ -64,9 +64,8 @@ const SearchFields = ({ setTableData, setLoading }: SearchFieldsProps) => {
     setFormValues(initialValues);
   };
 
-  const fetchAutoComplete = useCallback(
-    async (query: string, field: "cp_name" | "cp_phone") => {
-      if (query.length < 3) return;
+  const fetchAutoComplete = debounce(
+    useCallback(async (query: string, field: "cp_name" | "cp_phone") => {
       setCpLoading(true);
       setNoOptionsMessage("");
       try {
@@ -88,8 +87,8 @@ const SearchFields = ({ setTableData, setLoading }: SearchFieldsProps) => {
       } finally {
         setCpLoading(false);
       }
-    },
-    []
+    }, []),
+    300
   );
 
   const handleCpChange =
@@ -150,6 +149,19 @@ const SearchFields = ({ setTableData, setLoading }: SearchFieldsProps) => {
     }
   };
 
+  const handlePaste = (event: React.ClipboardEvent<HTMLInputElement>) => {
+    event.preventDefault();
+
+    const pastedNames = new Set(
+      event.clipboardData.getData("text").trim().split(/\r?\n/).filter(Boolean)
+    );
+
+    setFormValues((prev) => ({
+      ...prev,
+      cp_name: [...prev.cp_name, ...pastedNames],
+    }));
+  };
+
   return (
     <Box
       sx={{
@@ -203,6 +215,8 @@ const SearchFields = ({ setTableData, setLoading }: SearchFieldsProps) => {
             <Autocomplete
               multiple
               freeSolo
+              autoComplete
+              filterOptions={(x) => x}
               size="small"
               loading={cpLoading}
               options={cpOptions}
@@ -217,28 +231,42 @@ const SearchFields = ({ setTableData, setLoading }: SearchFieldsProps) => {
                 [i ? "phone" : "name"]: val,
                 [i ? "name" : "phone"]: "",
               }))}
-              onInputChange={(_, value) => fetchAutoComplete(value, field)}
-              onChange={handleCpChange(field ) }
+              onInputChange={(_, value) => {
+                if (value.trim().length >= 3) {
+                  fetchAutoComplete(value, field);
+                }
+              }}
+              onChange={handleCpChange(field)}
               renderTags={(value, getTagProps) =>
-                value.map((option, index) => (
-                  <Chip
-                    key={index}
-                    label={option[i ? "phone" : "name"]}
-                    size="small"
-                    {...getTagProps({ index })}
-                  />
-                ))
+                value.map((option, index) => {
+                  const { key, ...tagProps } = getTagProps({ index });
+                  return (
+                    <Chip
+                      key={key}
+                      label={option[i ? "phone" : "name"]}
+                      size="small"
+                      {...tagProps}
+                    />
+                  );
+                })
               }
               renderInput={(params) => (
                 <TextField
                   {...params}
                   label={i ? "Телефон контрагента" : "Контрагент"}
-                  fullWidth
-                  InputProps={{
-                    ...params.InputProps,
-                    endAdornment: cpLoading && (
-                      <CircularProgress color="inherit" size={20} />
-                    ),
+                  onPaste={field === "cp_name" ? handlePaste : undefined}
+                  slotProps={{
+                    input: {
+                      ...params.InputProps,
+                      endAdornment: (
+                        <React.Fragment>
+                          {cpLoading ? (
+                            <CircularProgress color="inherit" size={20} />
+                          ) : null}
+                          {params.InputProps.endAdornment}
+                        </React.Fragment>
+                      ),
+                    },
                   }}
                 />
               )}
@@ -262,21 +290,12 @@ const SearchFields = ({ setTableData, setLoading }: SearchFieldsProps) => {
             </Grid>
           )
         )}
+
         {/* Дополнительные поля */}
-        {/* <Collapse timeout={500} in={addFields} sx={{ width: "100%" }}> */}
-        {/* {addFields && ( */}
-        {/* <Grid
-              container
-              spacing={{ xs: 2, md: 1 }}
-              columns={{ xs: 4, md: 8 }}
-            > */}
         <AddedSearchFields
           formValues={formValues}
           handleArrayChange={handleArrayChange}
         />
-        {/* </Grid> */}
-        {/* )} */}
-        {/* </Collapse> */}
       </Grid>
 
       <CustomButtons
