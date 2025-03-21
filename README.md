@@ -1,50 +1,23 @@
-# React + TypeScript + Vite
+# Customer Orders
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## Описание проекта
 
-Currently, two official plugins are available:
+**Customer Orders** — это веб-приложение, предназначенное для управления заказами клиентов, с функцией автозаполнения для повышения удобства пользователей.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
 
-## Expanding the ESLint configuration
+## Основные функции
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+- **Управление заказами**: Просмотр заказов в удобном формате.
+- **Автокомплит**: Ускоренный ввод данных с помощью автокомплита для клиентов, товаров и других полей.
+- **Поиск и фильтрация**: Поиск заказов по различным параметрам (например, по клиенту, дате, статусу).
+- **Статусы заказов**: Возможность отслеживать статус заказа (например, "В обработке", "Выполнен", "Отменен").
 
-- Configure the top-level `parserOptions` property like this:
+## Предстоящие задачи и улучшения
 
-```js
-export default tseslint.config({
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
-```
+- **Управление изменениями заказов**: реализовать функциональность для редактирования существующих заказов, включая обновление информации о клиентах, изменении статуса заказа и корректировку списка товаров.&#8203;:contentReference[oaicite:0]{index=0}
 
-- Replace `tseslint.configs.recommended` to `tseslint.configs.recommendedTypeChecked` or `tseslint.configs.strictTypeChecked`
-- Optionally add `...tseslint.configs.stylisticTypeChecked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and update the config:
+- **Обработка возвратов и отмененных заказов**: :contentReference[oaicite:1]{index=1}&#8203;:contentReference[oaicite:2]{index=2}
 
-```js
-// eslint.config.js
-import react from 'eslint-plugin-react'
+- **Импорт и экспорт данных**: :contentReference[oaicite:3]{index=3}&#8203;:contentReference[oaicite:4]{index=4}
 
-export default tseslint.config({
-  // Set the react version
-  settings: { react: { version: '18.3' } },
-  plugins: {
-    // Add the react plugin
-    react,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended rules
-    ...react.configs.recommended.rules,
-    ...react.configs['jsx-runtime'].rules,
-  },
-})
-```
+
