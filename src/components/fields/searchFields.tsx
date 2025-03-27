@@ -32,7 +32,10 @@ const SearchFields = ({ setTableData, setLoading }: SearchFieldsProps) => {
   const [cpOptions, setCpOptions] = useState<{ name: string; phone: string }[]>(
     []
   );
-  const [cpLoading, setCpLoading] = useState(false);
+  const [loadingStates, setLoadingStates] = useState({
+    cp_name: false,
+    cp_phone: false
+  });
   const [noOptionsMessage, setNoOptionsMessage] = useState<string>("");
 
   useEffect(() => {
@@ -66,7 +69,7 @@ const SearchFields = ({ setTableData, setLoading }: SearchFieldsProps) => {
 
   const fetchAutoComplete = debounce(
     useCallback(async (query: string, field: "cp_name" | "cp_phone") => {
-      setCpLoading(true);
+      setLoadingStates(prev => ({ ...prev, [field]: true }));
       setNoOptionsMessage("");
       try {
         const response = await getAutoComplete(query, field);
@@ -85,7 +88,7 @@ const SearchFields = ({ setTableData, setLoading }: SearchFieldsProps) => {
       } catch {
         showSnackbar("Ошибка при загрузке контрагентов", { variant: "error" });
       } finally {
-        setCpLoading(false);
+        setLoadingStates(prev => ({ ...prev, [field]: false }));
       }
     }, []),
     300
@@ -98,6 +101,10 @@ const SearchFields = ({ setTableData, setLoading }: SearchFieldsProps) => {
         return { ...prev, [key]: updatedValues };
       });
     };
+
+  const cleanPhoneNumber = (phone: string): string => {
+    return phone.replace(/\D/g, "");
+  };
 
   const handleArrayChange =
     (key: keyof FormValues) => (_: any, newValue: any) => {
@@ -133,7 +140,7 @@ const SearchFields = ({ setTableData, setLoading }: SearchFieldsProps) => {
           ? formValues.co_moment_begin.format("YYYY-MM-DD HH:mm:ss")
           : null,
         co_moment_end: formValues.co_moment_end
-          ? formValues.co_moment_end.format("YYYY-MM-DD HH:mm:ss")
+          ? formValues.co_moment_end.format("YYYY-MM-DD 23:59:59")
           : null,
       };
       if (formattedValues.co_moment_end && !formattedValues.co_moment_begin) {
@@ -155,17 +162,26 @@ const SearchFields = ({ setTableData, setLoading }: SearchFieldsProps) => {
     }
   };
 
-  const handlePaste = (event: React.ClipboardEvent<HTMLInputElement>) => {
+  const handlePaste = (
+    event: React.ClipboardEvent<HTMLDivElement>,
+    field: "cp_name" | "cp_phone"
+  ) => {
     event.preventDefault();
+    const pastedText = event.clipboardData.getData("text").trim();
 
-    const pastedNames = new Set(
-      event.clipboardData.getData("text").trim().split(/\r?\n/).filter(Boolean)
-    );
+    const pastedItems = pastedText.split(/[\n,]+/).filter(Boolean);
 
-    setFormValues((prev) => ({
-      ...prev,
-      cp_name: [...prev.cp_name, ...pastedNames],
-    }));
+    if (field === "cp_phone") {
+      setFormValues((prev) => ({
+        ...prev,
+        cp_phone: [...new Set([...prev.cp_phone, ...pastedItems])],
+      }));
+    } else {
+      setFormValues((prev) => ({
+        ...prev,
+        cp_name: [...new Set([...prev.cp_name, ...pastedItems])],
+      }));
+    }
   };
 
   return (
@@ -224,7 +240,7 @@ const SearchFields = ({ setTableData, setLoading }: SearchFieldsProps) => {
               autoComplete
               filterOptions={(x) => x}
               size="small"
-              loading={cpLoading}
+              loading={loadingStates[field]}
               options={cpOptions}
               noOptionsText={noOptionsMessage}
               getOptionLabel={(option) => {
@@ -242,7 +258,9 @@ const SearchFields = ({ setTableData, setLoading }: SearchFieldsProps) => {
               }))}
               onInputChange={(_, value) => {
                 if (value.trim().length >= 3) {
-                  fetchAutoComplete(value, field);
+                  const cleanedValue =
+                    field === "cp_phone" ? cleanPhoneNumber(value) : value;
+                  fetchAutoComplete(cleanedValue, field);
                 }
               }}
               onChange={handleCpChange(field)}
@@ -263,15 +281,15 @@ const SearchFields = ({ setTableData, setLoading }: SearchFieldsProps) => {
                 <TextField
                   {...params}
                   label={i ? "Телефон контрагента" : "Контрагент"}
-                  onPaste={field === "cp_name" ? handlePaste : undefined}
+                  onPaste={(e) => handlePaste(e, field)}
                   slotProps={{
                     input: {
                       ...params.InputProps,
                       endAdornment: (
                         <React.Fragment>
-                          {cpLoading ? (
-                            <CircularProgress color="inherit" size={20} />
-                          ) : null}
+                           {loadingStates[field] && ( 
+                          <CircularProgress color="inherit" size={20} />
+                        )}
                           {params.InputProps.endAdornment}
                         </React.Fragment>
                       ),

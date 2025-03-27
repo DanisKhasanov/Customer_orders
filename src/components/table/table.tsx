@@ -10,6 +10,7 @@ import { OrderData, TableProps } from "@/props/index";
 import dayjs from "dayjs";
 import { StatusColor, formatPrice } from "@/helpers/index";
 import { Box } from "@mui/material";
+import { MRT_TablePagination } from "material-react-table";
 
 const Table = ({ tableData, loading }: TableProps) => {
   const totalOrders = tableData.length;
@@ -142,11 +143,11 @@ const Table = ({ tableData, loading }: TableProps) => {
       ],
     },
     state: { isLoading: loading },
-
     enableFullScreenToggle: false,
     enableColumnResizing: true,
     layoutMode: "grid",
     enableColumnFilters: false,
+    enableBottomToolbar: false,
     enableDensityToggle: false,
     enableColumnActions: false,
     // enableTopToolbar: false,
@@ -190,7 +191,14 @@ const Table = ({ tableData, loading }: TableProps) => {
     },
   });
 
-  return <MaterialReactTable table={table} />;
+  return (
+    <>
+      <MaterialReactTable table={table} />
+      <Box display="flex" flexDirection="column" alignItems="center">
+        <MRT_TablePagination table={table} />
+      </Box>
+    </>
+  );
 };
 
 export default Table;
