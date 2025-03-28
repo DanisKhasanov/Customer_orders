@@ -14,5 +14,6 @@ export interface FormValues {
   "Новый клиент": string[];
   salesChannel_name: string[];
   closing_application: string[];
+  assortment: string[];
   [key: string]: string[] | Dayjs | null; 
 }

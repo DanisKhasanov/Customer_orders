@@ -32,9 +32,13 @@ const SearchFields = ({ setTableData, setLoading }: SearchFieldsProps) => {
   const [cpOptions, setCpOptions] = useState<{ name: string; phone: string }[]>(
     []
   );
+  const [productOptions, setProductOptions] = useState<
+    { shortName: string; fullName: string }[]
+  >([]);
   const [loadingStates, setLoadingStates] = useState({
     cp_name: false,
-    cp_phone: false
+    cp_phone: false,
+    assortment: false,
   });
   const [noOptionsMessage, setNoOptionsMessage] = useState<string>("");
 
@@ -68,38 +72,57 @@ const SearchFields = ({ setTableData, setLoading }: SearchFieldsProps) => {
   };
 
   const fetchAutoComplete = debounce(
-    useCallback(async (query: string, field: "cp_name" | "cp_phone") => {
-      setLoadingStates(prev => ({ ...prev, [field]: true }));
-      setNoOptionsMessage("");
-      try {
-        const response = await getAutoComplete(query, field);
-        if (!response.length) {
-          setCpOptions([]);
-          setNoOptionsMessage("Контрагенты не найдены");
-          return;
+    useCallback(
+      async (query: string, field: "cp_name" | "cp_phone" | "assortment") => {
+        setLoadingStates((prev) => ({ ...prev, [field]: true }));
+        setNoOptionsMessage("");
+        try {
+          const response = await getAutoComplete(query, field);
+
+          if (field === "assortment") {
+            // Для товаров сохраняем оба варианта названия
+            setProductOptions(
+              response.map(([shortName, fullName]) => ({
+                shortName,
+                fullName,
+              }))
+            );
+          } else {
+            setCpOptions(
+              response.map(([key, value]) =>
+                field === "cp_name"
+                  ? { name: key, phone: value }
+                  : { name: value, phone: key }
+              )
+            );
+          }
+
+          if (!response.length) {
+            setNoOptionsMessage("Ничего не найдено");
+          }
+        } catch {
+          showSnackbar("Ошибка при загрузке данных", { variant: "error" });
+        } finally {
+          setLoadingStates((prev) => ({ ...prev, [field]: false }));
         }
-        setCpOptions(
-          response.map(([key, value]) =>
-            field === "cp_name"
-              ? { name: key, phone: value }
-              : { name: value, phone: key }
-          )
-        );
-      } catch {
-        showSnackbar("Ошибка при загрузке контрагентов", { variant: "error" });
-      } finally {
-        setLoadingStates(prev => ({ ...prev, [field]: false }));
-      }
-    }, []),
+      },
+      []
+    ),
     300
   );
 
   const handleCpChange =
-    (key: "cp_name" | "cp_phone") => (_: any, newValue: any) => {
-      setFormValues((prev) => {
-        const updatedValues = newValue.map((item: any) => item[key.slice(3)]);
-        return { ...prev, [key]: updatedValues };
-      });
+    (key: "cp_name" | "cp_phone" | "assortment") => (_: any, newValue: any) => {
+      setFormValues((prev) => ({
+        ...prev,
+        [key]: newValue.map((item: any) =>
+          key === "assortment"
+            ? typeof item === "string"
+              ? item
+              : item.shortName
+            : item[key.slice(3)]
+        ),
+      }));
     };
 
   const cleanPhoneNumber = (phone: string): string => {
@@ -164,26 +187,21 @@ const SearchFields = ({ setTableData, setLoading }: SearchFieldsProps) => {
 
   const handlePaste = (
     event: React.ClipboardEvent<HTMLDivElement>,
-    field: "cp_name" | "cp_phone"
+    field: "cp_name" | "cp_phone" | "assortment"
   ) => {
     event.preventDefault();
     const pastedText = event.clipboardData.getData("text").trim();
 
-    const pastedItems = pastedText.split(/[\n,]+/).filter(Boolean);
+    const pastedItems =
+      field === "assortment"
+        ? [pastedText]
+        : pastedText.split(/[\n,]+/).filter(Boolean);
 
-    if (field === "cp_phone") {
-      setFormValues((prev) => ({
-        ...prev,
-        cp_phone: [...new Set([...prev.cp_phone, ...pastedItems])],
-      }));
-    } else {
-      setFormValues((prev) => ({
-        ...prev,
-        cp_name: [...new Set([...prev.cp_name, ...pastedItems])],
-      }));
-    }
+    setFormValues((prev) => ({
+      ...prev,
+      [field]: [...new Set([...(prev[field] || []), ...pastedItems])],
+    }));
   };
-
   return (
     <Box
       sx={{
@@ -233,7 +251,7 @@ const SearchFields = ({ setTableData, setLoading }: SearchFieldsProps) => {
 
         {/* Контрагент и Телефон контрагента */}
         {(["cp_name", "cp_phone"] as const).map((field, i) => (
-          <Grid key={field} size={{ xs: 12, sm: 6, md: 4 }}>
+          <Grid key={field} size={{ xs: 12, sm: 6, md: 2.7 }}>
             <Autocomplete
               multiple
               freeSolo
@@ -244,9 +262,7 @@ const SearchFields = ({ setTableData, setLoading }: SearchFieldsProps) => {
               options={cpOptions}
               noOptionsText={noOptionsMessage}
               getOptionLabel={(option) => {
-                if (typeof option === "string") {
-                  return option;
-                }
+                if (typeof option === "string") return option;
                 return `${option[i ? "phone" : "name"]} (${
                   option[i ? "name" : "phone"]
                 })`;
@@ -287,9 +303,9 @@ const SearchFields = ({ setTableData, setLoading }: SearchFieldsProps) => {
                       ...params.InputProps,
                       endAdornment: (
                         <React.Fragment>
-                           {loadingStates[field] && ( 
-                          <CircularProgress color="inherit" size={20} />
-                        )}
+                          {loadingStates[field] && (
+                            <CircularProgress color="inherit" size={20} />
+                          )}
                           {params.InputProps.endAdornment}
                         </React.Fragment>
                       ),
@@ -300,6 +316,67 @@ const SearchFields = ({ setTableData, setLoading }: SearchFieldsProps) => {
             />
           </Grid>
         ))}
+
+        {/* Товары или группа */}
+        <Grid size={{ xs: 12, sm: 6, md: 2.6 }}>
+          <Autocomplete
+            multiple
+            freeSolo
+            autoComplete
+            filterOptions={(x) => x}
+            size="small"
+            loading={loadingStates.assortment}
+            options={productOptions}
+            noOptionsText={noOptionsMessage}
+            getOptionLabel={(option) => {
+              if (typeof option === "string") return option;
+              return option.fullName; // Показываем полное название
+            }}
+            filterSelectedOptions
+            value={formValues.assortment.map((val: string) => {
+              const foundOption = productOptions.find(
+                (opt) => opt.shortName === val
+              );
+              return foundOption || val;
+            })}
+            onInputChange={(_, value) => {
+              if (value.trim().length >= 3) {
+                fetchAutoComplete(value, "assortment");
+              }
+            }}
+            onChange={handleCpChange("assortment")}
+            renderTags={(value, getTagProps) =>
+              value.map((option, index) => {
+                const { key, ...tagProps } = getTagProps({ index });
+                const label =
+                  typeof option === "string" ? option : option.shortName;
+                return (
+                  <Chip key={key} label={label} size="small" {...tagProps} />
+                );
+              })
+            }
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Товар или группа"
+                onPaste={(e) => handlePaste(e, "assortment")}
+                slotProps={{
+                  input: {
+                    ...params.InputProps,
+                    endAdornment: (
+                      <React.Fragment>
+                        {loadingStates.assortment && (
+                          <CircularProgress color="inherit" size={20} />
+                        )}
+                        {params.InputProps.endAdornment}
+                      </React.Fragment>
+                    ),
+                  },
+                }}
+              />
+            )}
+          />
+        </Grid>
 
         {/* Завел заявку, Заявка закреплена, Клиент закреплен */}
         {["Завел заявку", "Заявка закреплена", "Клиент закреплен"].map(

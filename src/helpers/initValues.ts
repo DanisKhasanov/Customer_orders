@@ -14,4 +14,5 @@ export const initialValues: FormValues = {
   "Новый клиент": [], // Новый клиент
   salesChannel_name: [], // Канал продаж
   closing_application: [], // Причины закрытия заявки
+  assortment: [],
 };
